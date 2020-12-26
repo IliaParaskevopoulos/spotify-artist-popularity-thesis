@@ -1,32 +1,39 @@
 
-file.path(R.home("bin"), "R")
 
 #Set up ------------------------------------------------------------------
 setwd("C:/Users/Ilias/Desktop/Thesis Files")
 
-list.of.packages <- c("data.table", "dplyr", "caTools")
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
-install.packages("finalfit")
-library(finalfit) 
+list.of.packages <- c("data.table", "dplyr", "caTools","tidyverse","caret","finalfit","rioja",
+                      "dplyr","matrixStats","microbenchmark","PerformanceAnalytics",
+                      "GGally", "rlang","FreqProf", "moments",
+                      "fastDummies")
+#new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+#if(length(new.packages)) install.packages(new.packages)
+#install.packages('fastDummies')
+#library('fastDummies')
+#install.packages("tidyverse")
+#for missings
+#install.packages("finalfit")
+#library("finalfit") 
+#install.packages("GGally")
+library(rlang)
+library("fastDummies")
 
 library(data.table)
 #install.packages("RDocumentation")
 #install.packages("FreqProf")
 #install.packages("rioja")
 library(rioja)
-library(dplyr)
-library(caTools)
+library("dplyr")
+library("caTools")
 library(zoo)
 library("tidyverse")
 #install.packages("dplyr")  #maybe i dont need this
 #library("matrixStats") #maybe i dont need this
-#library("microbenchmark")
-#library("PerformanceAnalytics") #maybe i dont need this
-#library("moments") 
-
-
+library(microbenchmark)
+library(PerformanceAnalytics) #maybe i dont need this
+library(moments) 
+#update.packages()
 
 
 #load Data
@@ -34,38 +41,33 @@ artists <- read.table('parsed-meta-data.csv', sep = '\t', encoding = 'UTF-8', fi
                       na.strings = c('NA','None'), quote='')
 artists$no.column<- NULL
 artists <- artists[,c("name","code2","gender", "record_label","press_contact","booking_agent",
-"cmstats_sp_popularity", "cmstats_sp_monthly_listeners","cmstats_sp_followers", 
-"cmstats_sp_popularity_rank", "cmstats_sp_monthly_listeners_rank","cmstats_sp_followers_rank", 
-"cmstats_sp_where_people_listen", "cmstats_num_sp_playlists", "cmstats_sp_playlist_total_reach",
-"cmstats_deezer_fans", "cmstats_deezer_fans_rank",
-"cmstats_ycs_subscribers", "cmstats_ycs_subscribers_rank",
-"cmstats_ycs_views", "cmstats_ycs_views_rank",
-"cmstats_youtube_daily_video_views" , "cmstats_youtube_daily_video_views_rank",
-"cmstats_youtube_monthly_video_views","cmstats_youtube_monthly_video_views_rank",
-"cmstats_youtube_daily_video_views", "cmstats_youtube_daily_video_views_rank",     
-"cmstats_youtube_monthly_video_views", "cmstats_youtube_monthly_video_views_rank",
-"cmstats_pandora_listeners_28_day" , "cmstats_pandora_listeners_28_day_rank",
-"cmstats_pandora_lifetime_stations_added" , "cmstats_pandora_lifetime_stations_added_rank",  
-"cmstats_pandora_lifetime_streams" , "cmstats_pandora_lifetime_streams_rank", 
-"cmstats_twitch_followers", "cmstats_twitch_followers_rank", "cmstats_twitch_views",
-"cmstats_twitch_views_rank","cmstats_twitch_monthly_viewer_hours", "cmstats_twitch_monthly_viewer_hours_rank",
-"cmstats_twitch_weekly_viewer_hours", "cmstats_twitch_weekly_viewer_hours_rank",
-"cmstats_tiktok_followers", "cmstats_tiktok_followers_rank",
-"cmstats_tiktok_likes", "cmstats_tiktok_likes_rank",
-"cmstats_ins_followers", "cmstats_ins_followers_rank"
- )] 
+                      "cmstats_sp_popularity", "cmstats_sp_monthly_listeners","cmstats_sp_followers", 
+                      "cmstats_sp_popularity_rank", "cmstats_sp_monthly_listeners_rank","cmstats_sp_followers_rank", 
+                      "cmstats_sp_where_people_listen", "cmstats_num_sp_playlists", "cmstats_sp_playlist_total_reach",
+                      "cmstats_deezer_fans", "cmstats_deezer_fans_rank",
+                      "cmstats_ycs_subscribers", "cmstats_ycs_subscribers_rank",
+                      "cmstats_ycs_views", "cmstats_ycs_views_rank",
+                      "cmstats_youtube_daily_video_views" , "cmstats_youtube_daily_video_views_rank",
+                      "cmstats_youtube_monthly_video_views","cmstats_youtube_monthly_video_views_rank",
+                      "cmstats_youtube_daily_video_views", "cmstats_youtube_daily_video_views_rank",     
+                      "cmstats_youtube_monthly_video_views", "cmstats_youtube_monthly_video_views_rank",
+                      "cmstats_pandora_listeners_28_day" , "cmstats_pandora_listeners_28_day_rank",
+                      "cmstats_pandora_lifetime_stations_added" , "cmstats_pandora_lifetime_stations_added_rank",  
+                      "cmstats_pandora_lifetime_streams" , "cmstats_pandora_lifetime_streams_rank", 
+                      "cmstats_twitch_followers", "cmstats_twitch_followers_rank", "cmstats_twitch_views",
+                      "cmstats_twitch_views_rank","cmstats_twitch_monthly_viewer_hours", "cmstats_twitch_monthly_viewer_hours_rank",
+                      "cmstats_twitch_weekly_viewer_hours", "cmstats_twitch_weekly_viewer_hours_rank",
+                      "cmstats_tiktok_followers", "cmstats_tiktok_followers_rank",
+                      "cmstats_tiktok_likes", "cmstats_tiktok_likes_rank",
+                      "cmstats_ins_followers", "cmstats_ins_followers_rank"
+)] 
 
 #deezer fans, instagram followers, youtube subscribers, tiktok followers, pandora monthly listeners
 #number of observations
 nrow(artists)
 
-missing_plot(artists)
-missing_pattern(artists)
-
 
 # rename dataset columns --------------------------------------------------
-
-
 
 names(artists)[2] <- "country"
 names(artists)[7:9] <- c("popularity_score", "monthly_listeners", "followers")
@@ -91,10 +93,6 @@ names(artists)[44:45] <- c("instagram_followers","instagram_followers_rank") #IN
 
 nrow(artists)
 
-#DRAFT: artists$deezer_fans_new <- na.approx(artists$deezer_fans)
-#DRAFT: approxfun(x = artists$deezer_fans, y = artists$youtube_subscribers,method = "linear", rule = 1, f = 0, ties = mean)
-
-
 
 # remove missings, duplicate rows, and other checks -----------------------
 
@@ -113,7 +111,6 @@ artists<-artists[(artists$playlist_reach >= 0),]
 artists<-artists[(artists$playlist_count >= 0),]
 nrow(artists)
 
-
 #remove Rows with RECORD LABEL & COUNTRY missing
 artists<-artists[(!is.na(artists$record_label) & !is.na(artists$name)),]
 #artists<-artists[(!is.na(artists$gender) & !is.na(artists$country)),]
@@ -122,147 +119,182 @@ artists<-artists[(!is.na(artists$record_label) & !is.na(artists$name)),]
 
 #artists<-artists[(!is.na(artists$record_label)),]
 nrow(artists)
-View(artists)
-
-
 
 
 # classify Country --------------------------------------------------------
 
 
 #COUNTRY Classification
+
 artists$country_classified[artists$country == 'dk' |
-                              artists$country == 'se' |
-                              artists$country == 'fi' |
-                              artists$country == 'no' |
-                              artists$country == 'is' |
-                              artists$country == 'fo' |
-                              artists$country == 'gl' |
-                              artists$country == 'ax'] <- "nordics"
+                             artists$country == 'se' |
+                             artists$country == 'fi' |
+                             artists$country == 'no' |
+                             artists$country == 'is' |
+                             artists$country == 'fo' |
+                             artists$country == 'gl' |
+                             artists$country == 'ax'] <- "Nordics"
 artists$country_classified[artists$country == 'be' |
-                              artists$country == 'nl' |
-                              artists$country == 'lu'] <- "benelux"
+                             artists$country == 'nl' |
+                             artists$country == 'lu'] <- "Benelux"
 artists$country_classified[artists$country == 'rs' |
-                              artists$country == 'ua' |
-                              artists$country == 'rs' |
-                              artists$country == 'al' |
-                              artists$country == 'mk' |
-                              artists$country == 'me' |
-                              artists$country == 'ba' |
-                              artists$country == 'hr' |
-                              artists$country == 'ro' |
-                              artists$country == 'bg' |
-                              artists$country == 'by' |
-                              artists$country == 'lt' |
-                              artists$country == 'lv' |
-                              artists$country == 'ee' |
-                              artists$country == 'pl' |
-                              artists$country == 'ru' |
-                              artists$country == 'sk' |
-                              artists$country == 'gr' |
-                              artists$country == 'si' |
-                              artists$country == 'yu' |
-                              artists$country == 'hu' |
-                              artists$country == 'cz']<- "east europe"
+                             artists$country == 'ua' |
+                             artists$country == 'rs' |
+                             artists$country == 'al' |
+                             artists$country == 'mk' |
+                             artists$country == 'me' |
+                             artists$country == 'ba' |
+                             artists$country == 'hr' |
+                             artists$country == 'ro' |
+                             artists$country == 'bg' |
+                             artists$country == 'by' |
+                             artists$country == 'lt' |
+                             artists$country == 'lv' |
+                             artists$country == 'ee' |
+                             artists$country == 'pl' |
+                             artists$country == 'ru' |
+                             artists$country == 'sk' |
+                             artists$country == 'gr' |
+                             artists$country == 'si' |
+                             artists$country == 'yu' |
+                             artists$country == 'hu' |
+                             artists$country == 'cz']<- "East Europe"
 artists$country_classified[artists$country == 'rs' |
-                              artists$country == 'ar' |
-                              artists$country == 'co' |
-                              artists$country == 'uy' |
-                              artists$country == 'py' |
-                              artists$country == 'pe' |
-                              artists$country == 'cl' |
-                              artists$country == 'bo' |
-                              artists$country == 'br' |
-                              artists$country == 'ec' |
-                              artists$country == 've' |
-                              artists$country == 'sr' |
-                              artists$country == 'gy'] <- "south america"
-artists$country_classified[artists$country == 'it' |
-                              artists$country == 'sm' ] <- "italy"
+                             artists$country == 'tt' |
+                             artists$country == 'do' |
+                             artists$country == 'pr' |
+                             artists$country == 'ht' |
+                             artists$country == 'hn' |
+                             artists$country == 'cu' |
+                             artists$country == 'gp' |
+                             artists$country == 'jm' |
+                             artists$country == 'mx' |
+                             artists$country == 'pa' |
+                             artists$country == 'ht' |
+                             artists$country == 'gt' |
+                             artists$country == 'gm' |
+                             artists$country == 'ar' |
+                             artists$country == 'co' |
+                             artists$country == 'uy' |
+                             artists$country == 'py' |
+                             artists$country == 'pe' |
+                             artists$country == 'cl' |
+                             artists$country == 'bo' |
+                             artists$country == 'br' |
+                             artists$country == 'ec' |
+                             artists$country == 've' |
+                             artists$country == 'sr' |
+                             artists$country == 'gy'] <- "Latin America"
 artists$country_classified[artists$country == 'ie' |
-                              artists$country == 'gb' ] <- "gb+ire"
-artists$country_classified[artists$country == 'us' ] <- "us"
+                             artists$country == 'gb' ] <- "Britain+"
+artists$country_classified[artists$country == 'us' |
+                           artists$country == 'ca' ] <- "North America"
 artists$country_classified[artists$country == 'de' |
-                              artists$country == 'ch' |
-                              artists$country == 'at' ] <- "ger+aust+switz"
-artists$country_classified[artists$country == 'fr' ] <- "france"
+                             artists$country == 'ch' |
+                             artists$country == 'at' ] <- "Germany+"
+artists$country_classified[artists$country == 'fr' ] <- "France"
 artists$country_classified[artists$country == 'es' |
-                              artists$country == 'pt' ] <- "spain+portugal"
+                             artists$country == 'pt'|
+                           artists$country == 'it' |
+                             artists$country == 'sm'] <- "South Europe"
 artists$country_classified[artists$country == 'au' |
-                              artists$country == 'nz'] <- "oceania"
+                             artists$country == 'nz'] <- "Oceania"
 artists$country_classified[artists$country == 'ir' |
-                              artists$country == 'iq' |
-                              artists$country == 'sy' |
-                              artists$country == 'lb' |
-                              artists$country == 'jo' |
-                              artists$country == 'sa' |
-                              artists$country == 'ae' |
-                              artists$country == 'bh' |
-                              artists$country == 'kw' |
-                              artists$country == 'qa' |
-                              artists$country == 'om' |
-                              artists$country == 'eg' |
-                              artists$country == 'am' |
-                              artists$country == 'az' |
-                              artists$country == 'il' |
-                              artists$country == 'tr' |
-                              artists$country == 'ye'] <- "mid east"
-artists$country_classified[artists$country == 'zw' |
-                              artists$country == 'zm' |
-                              artists$country == 'za' |
-                              artists$country == 'tn' |
-                              artists$country == 'sn' |
-                              artists$country == 'ng' |
-                              artists$country == 'na' |
-                              artists$country == 'gh' |
-                              artists$country == 'ma' |
-                              artists$country == 'ml' |
-                              artists$country == 'gn' |
-                              artists$country == 'cd' |
-                              artists$country == 'eh' |
-                              artists$country == 'ao' |
-                              artists$country == 'mz'] <- "africa"
-artists$country_classified[artists$country == 'tt' |
-                              artists$country == 'do' |
-                              artists$country == 'pr' |
-                              artists$country == 'ht' |
-                              artists$country == 'hn' |
-                              artists$country == 'cu' |
-                              artists$country == 'gp' |
-                              artists$country == 'jm'] <- "carribean"
-artists$country_classified[artists$country == 'mx' |
-                              artists$country == 'pa' |
-                              artists$country == 'ht' |
-                              artists$country == 'gt' |
-                              artists$country == 'gm'] <- "central america"
-artists$country_classified[artists$country == 'ca'] <- "Canada"
-artists$country_classified[artists$country == 'tw' |
-                              artists$country == 'cn' |
-                              artists$country == 'jp' |
-                              artists$country == 'kr' |
-                              artists$country == 'kp' |
-                              artists$country == 'vn' |
-                              artists$country == 'kh' |
-                              artists$country == 'th' |
-                              artists$country == 'sg' |
-                              artists$country == 'ph' |
-                              artists$country == 'hk' |
-                              artists$country == 'my' |
-                              artists$country == 'id' |
-                              artists$country == 'mo' |
-                              artists$country == 'bd' |
-                              artists$country == 'pk' |
-                              artists$country == 'in' |
-                              artists$country == 'lk' |
-                              artists$country == 'mu' |
-                              artists$country == 'kz' |
-                              artists$country == 'la' ] <- "asia"
+                             artists$country == 'iq' |
+                             artists$country == 'sy' |
+                             artists$country == 'lb' |
+                             artists$country == 'jo' |
+                             artists$country == 'sa' |
+                             artists$country == 'ae' |
+                             artists$country == 'bh' |
+                             artists$country == 'kw' |
+                             artists$country == 'qa' |
+                             artists$country == 'om' |
+                             artists$country == 'eg' |
+                             artists$country == 'am' |
+                             artists$country == 'az' |
+                             artists$country == 'il' |
+                             artists$country == 'tr' |
+                             artists$country == 'ye' |
+                             artists$country == 'zw' |
+                             artists$country == 'tw' |
+                             artists$country == 'cn' |
+                             artists$country == 'jp' |
+                             artists$country == 'kr' |
+                             artists$country == 'kp' |
+                             artists$country == 'vn' |
+                             artists$country == 'kh' |
+                             artists$country == 'th' |
+                             artists$country == 'sg' |
+                             artists$country == 'ph' |
+                             artists$country == 'hk' |
+                             artists$country == 'my' |
+                             artists$country == 'id' |
+                             artists$country == 'mo' |
+                             artists$country == 'bd' |
+                             artists$country == 'pk' |
+                             artists$country == 'in' |
+                             artists$country == 'lk' |
+                             artists$country == 'mu' |
+                             artists$country == 'kz' |
+                             artists$country == 'la' |
+                             artists$country == 'zm' |
+                             artists$country == 'za' |
+                             artists$country == 'tn' |
+                             artists$country == 'sn' |
+                             artists$country == 'ng' |
+                             artists$country == 'na' |
+                             artists$country == 'gh' |
+                             artists$country == 'ma' |
+                             artists$country == 'ml' |
+                             artists$country == 'gn' |
+                             artists$country == 'cd' |
+                             artists$country == 'cm' |
+                             artists$country == 'eh' |
+                             artists$country == 'ao' | 
+                             artists$country == 'gw' | 
+                             artists$country == 'cg' |
+                             artists$country == 'mz'] <- "Other"
 
 
-
+artists$country_classified[artists$name == 'Caló Pascoal'] <- "Other" #angola 
+artists$country_classified[artists$name == 'Steve Barakatt'] <- "North America"
+artists$country_classified[artists$name == 'Luke Mandala'] <- "North America"
+artists$country_classified[artists$name == 'Gangstagrass'] <- "North America"  
+artists$country_classified[artists$name == 'Seiler und Speer'] <- "Germany+"
+artists$country_classified[artists$name == 'Alex Skrindo'] <- "Nordics"
+artists$country_classified[artists$name == 'Kes'] <- "Other"
+artists$country_classified[artists$name == 'Tujamo'] <- "Germany+"
+artists$country_classified[artists$name == 'Philthy Chit'] <- "Britain+"
+artists$country_classified[artists$name == 'Alison May'] <- "Britain+"
+artists$country_classified[artists$name == 'Travis Greene'] <- "Britain+"
+artists$country_classified[artists$name == 'Diego Boneta'] <- "Latin America"
+artists$country_classified[artists$name == 'Andy C'] <- "Britain+"
+artists$country_classified[artists$name == 'KETTAMA'] <- "Britain+" 
+artists$country_classified[artists$name == 'Parallells'] <- "North America" 
+artists$country_classified[artists$name == 'Soumik Datta'] <- "Other" #india
+artists$country_classified[artists$name == 'Holtoug'] <- "Nordics" 
+artists$country_classified[artists$name == 'Los Elefantes'] <- "South Europe" 
+artists$country_classified[artists$name == 'Riccie Oriach'] <- "Latin America" 
+artists$country_classified[artists$name == 'Nandy'] <- "Other"  
+artists$country_classified[artists$name == 'Cally & Juice'] <- "Britain+"  
+artists$country_classified[artists$name == 'Kairo Kingdom'] <- "Germany+" 
+artists$country_classified[artists$name == 'Fuego'] <- "North America" 
+artists$country_classified[artists$name == 'Dj Malvado'] <- "Other"  
+artists$country_classified[artists$name == 'Sandra Afrika'] <- "East Europe" 
+artists$country_classified[artists$name == 'Sunny Sauceda Y Todo Eso'] <- "North America" 
+artists$country_classified[artists$name == 'B4bonah'] <- "Other" #gana 
+artists$country_classified[artists$name == 'Caal'] <- "South Europe" 
+artists$country_classified[artists$name == 'Omnium Gatherum'] <- "Nordics" 
+artists$country_classified[artists$name == 'Dexcell'] <- "Britain+" 
+artists$country_classified[artists$name == 'Nicki Kris'] <- "North America" 
+artists$country_classified[artists$name == 'Dylan'] <- "Britain+"  
+artists$country_classified[artists$name == 'Klayton'] <- "North America" 
+artists$country_classified[artists$name == 'Caal'] <- "South Europe" 
+artists$country_classified[artists$name == 'Luke Mandala'] <- "North America"  
+artists$country_classified[artists$name == 'Nicki Kris'] <- "North America"
 
 # operationalize Press_Contact and Booking_Agent --------------------------
-
 
 #PRESS CONTACT & BOOKING AGENT operationalization
 artists$press_contact[is.na(artists$press_contact)] <- 0
@@ -270,6 +302,8 @@ artists$booking_agent[is.na(artists$booking_agent)] <- 0
 artists$press_contact[!artists$press_contact == 0] <- 1
 artists$booking_agent[!artists$booking_agent == 0] <- 1
 
+artists$press_contact <- as.integer(artists$press_contact)
+artists$booking_agent <- as.integer(artists$booking_agent)
 
 
 # classify Record_Labels  ---------------------------------------------
@@ -335,21 +369,60 @@ for (lbl in label_iter) {
   artists[grepl(lbl, record_label, ignore.case=TRUE), major_label:=1]
 }
 
+
 artists$album_label[artists$record_label=="" | artists$record_label==","] <- NA
 artists$major_label[is.na(artists$record_label)] <- NA
-#artists$major_label[artists$major_label==1] <- "Major label"
-#artists$major_label[artists$major_label==0] <- "Indie label"
 
 
+# Missings ----------------------------------------------------------------
+
+#missing_glimpse(artists)    
+#explanatory_edu <- c("popularity_score", "press_contact", "major_label",
+#"deezer_fans_rank","youtube_subscribers_rank","youtube_views_rank",
+#"pandora_monthly_listeners_rank","twitch_monthly_viewers_rank",
+#"twitch_weekly_viewers_rank")
+#dependent <- "gender"
+
+#missing_pattern(dependent, explanatory_edu)
+
+#M <- artists[,c("gender", "major_label","popularity_score", "playlist_count", "playlist_reach",
+#                "deezer_fans_rank","youtube_subscribers_rank", "youtube_views_rank",
+ #               "pandora_monthly_listeners_rank","twitch_monthly_viewers_rank")] 
+
+#library(finalfit)
+#missing_pairs(M)
+
+
+#missing_glimpse(artists)    
+#explanatory_edu <- c("popularity_score", "press_contact", "major_label",
+#"deezer_fans_rank","youtube_subscribers_rank","youtube_views_rank",
+#"pandora_monthly_listeners_rank","twitch_monthly_viewers_rank",
+#"twitch_weekly_viewers_rank")
+#dependent <- "gender"
+
+#missing_pattern(dependent, explanatory_edu)
 
 
 
 
 # add Gender in dataset ---------------------------------------------------
 
-
-
-artists$gender <- ifelse(artists$name == "María Yfeu",0, artists$gender)
+artists$gender <- ifelse(artists$name == "Klayton",1, artists$gender)
+artists$gender <- ifelse(artists$name == "Dylan",0, artists$gender) 
+artists$gender <- ifelse(artists$name == "Nicki Kris",0, artists$gender) 
+artists$gender <- ifelse(artists$name == "Dexcell",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Caal",1, artists$gender)   
+artists$gender <- ifelse(artists$name == "Steve Barakatt",1, artists$gender)
+artists$gender <- ifelse(artists$name == "Luke Mandala",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Omnium Gatherum",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "B4bonah",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Sunny Sauceda Y Todo Eso",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Sandra Afrika",0, artists$gender)  
+artists$gender <- ifelse(artists$name == "Dj Malvado",1, artists$gender)  
+artists$gender <- ifelse(artists$name == "Blue King Brown",0, artists$gender) 
+artists$gender <- ifelse(artists$name == "Fuego",1, artists$gender)
+artists$gender <- ifelse(artists$name == "Kairo Kingdom",1, artists$gender)  
+artists$gender <- ifelse(artists$name == "María Yfeu",0, artists$gender)  
 artists$gender <- ifelse(artists$name == "Leatherface",1, artists$gender)
 artists$gender <- ifelse(artists$name == "Jason WhitehorAhmet Sendil",1, artists$gender)
 artists$gender <- ifelse(artists$name == "Stimela",1, artists$gender)
@@ -1681,24 +1754,23 @@ artists$gender <- ifelse(artists$name == "Grey Area",1, artists$gender)
 artists$gender <- ifelse(artists$name == "Andi Almqvist",1, artists$gender)
 artists$gender <- ifelse(artists$name == "Rua Direita",1, artists$gender)
 artists$gender <- ifelse(artists$name == "Llajtaymanta",1, artists$gender)
-artists$gender <- ifelse(artists$name == "The Wild",1, artists$gender)
-artists$gender <- ifelse(artists$name == "",1, artists$gender)
-artists$gender <- ifelse(artists$name == "",1, artists$gender)
-artists$gender <- ifelse(artists$name == "",1, artists$gender)
-
-
-
-View(artists)
+artists$gender <- ifelse(artists$name == "The Wild",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Maicol & Manuel",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Parallells",0, artists$gender) 
+artists$gender <- ifelse(artists$name == "Soumik Datta",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Holtoug",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Los Elefantes",1, artists$gender) 
+artists$gender <- ifelse(artists$name == "Riccie Oriach",1, artists$gender)  
+artists$gender <- ifelse(artists$name == "Nandy",0, artists$gender) 
+artists$gender <- ifelse(artists$name == "Cally & Juice ",1, artists$gender)
 
 
 #Predicting GENDER from NAME | citation: [![rOpenSci logo](http://ropensci.org/public_images/github_footer.png)](http://ropensci.org) 
-
 
 #install.packages("gender")
 #library(gender)
 #gender(c("Madison", "Hillary"), years = 1930, method = "ssa")
 #a <- gender("Mike", years=1990, method = 'ssa')
-#a
 
 
 artists <- artists[,c("name","country","country_classified", "gender", "record_label", "major_label", 
@@ -1724,17 +1796,21 @@ artists <- artists[,c("name","country","country_classified", "gender", "record_l
 )] 
 
 
-nrow(artists)
-
-artists<-artists[(!is.na(artists$gender)),]
-
-View(artists)
+########################artists<-artists[(!is.na(artists$gender)),]
 nrow(artists) # IN TOTAL 2258 datapoints
 
-
-
-
-
+## missing exploration 
+artists$popularity_missing <- ifelse(is.na(artists$popularity_score), 1, 0)
+artists$gender_missing <- ifelse(is.na(artists$gender), 1, 0)
+artists$major_label_missing <- ifelse(is.na(artists$major_label), 1, 0)
+artists$playlist_count_missing <- ifelse(is.na(artists$playlist_count), 1, 0)
+artists$playlist_reach_missing <- ifelse(is.na(artists$playlist_reach), 1, 0)
+artists$deezer_fans_rank_missing <- ifelse(is.na(artists$deezer_fans_rank), 1, 0)
+artists$youtube_subscribers_rank_missing <- ifelse(is.na(artists$youtube_subscribers_rank), 1, 0)
+artists$youtube_views_rank_missing <- ifelse(is.na(artists$youtube_views_rank), 1, 0)
+artists$pandora_monthly_listeners_rank_missing <- ifelse(is.na(artists$pandora_monthly_listeners_rank), 1, 0)
+artists$twitch_monthly_viewers_rank_missing <- ifelse(is.na(artists$twitch_monthly_viewers_rank), 1, 0)
+artists$twitch_weekly_viewers_rank_missing <- ifelse(is.na(artists$twitch_weekly_viewers_rank), 1, 0)
 
 
 
@@ -1747,17 +1823,24 @@ social_stats$youtube_views_rank[artists$youtube_views_rank == 0] <- NA
 social_stats$pandora_monthly_listeners_rank[artists$pandora_monthly_listeners_rank == 0] <- NA
 social_stats$twitch_monthly_viewers_rank[artists$twitch_monthly_viewers_rank == 0] <- NA
 
+
 #remove Rows with 
 social_stats<-social_stats[(!is.na(social_stats$deezer_fans_rank) & !is.na(social_stats$pandora_monthly_listeners_rank)),]
-#social_stats<-social_stats[(!is.na(social_stats$gender) & !is.na(social_stats$country)),]
 nrow(social_stats)
 social_stats<-social_stats[(!is.na(social_stats$youtube_subscribers_rank)),]
 nrow(social_stats)
 social_stats<-social_stats[(!is.na(social_stats$twitch_monthly_viewers_rank)),]
 nrow(social_stats)
 social_stats<-social_stats[(!is.na(social_stats$youtube_views_rank)),]
+nrow(social_stats)
+social_stats<-social_stats[(!is.na(social_stats$twitch_weekly_viewers_rank)),]
+nrow(social_stats)
+social_stats<-social_stats[(!is.na(social_stats$gender) & !is.na(social_stats$country_classified)),]
+nrow(social_stats)
 
-social_stats1 <- social_stats[,c("name","country","country_classified", "gender", "record_label", "major_label", 
+
+
+social_stats <- social_stats[,c("name","country","country_classified", "gender", "record_label", "major_label", 
                                 "press_contact","booking_agent",
                                 "popularity_score", "monthly_listeners","followers", 
                                 "popularity_score_rank", "monthly_listeners_rank","followers_rank", 
@@ -1770,41 +1853,42 @@ social_stats1 <- social_stats[,c("name","country","country_classified", "gender"
                                 "twitch_weekly_viewers_rank"
 )] 
 
-social_stats2 <- social_stats1[,c("name","popularity_score", "monthly_listeners","followers", 
-                                     "popularity_score_rank", "monthly_listeners_rank","followers_rank", 
-                                     "playlist_count", "playlist_reach",
-                                     "deezer_fans_rank",
-                                     "youtube_subscribers_rank",
-                                     "youtube_views_rank",
-                                     "pandora_monthly_listeners_rank",
-                                     "twitch_monthly_viewers_rank",
-                                     "twitch_weekly_viewers_rank"
-)] 
-
-nrow(social_stats1) # IN TOTAL 700 datapoints
-View(social_stats1)
-nrow(social_stats2) # IN TOTAL 700 datapoints
-View(social_stats2)
+nrow(social_stats) # IN TOTAL 733 datapoints
 
 
 
+# dummy variables Country_Classified --------------------------------------
+
+#dummy variables in country_classified
+social_stats <- dummy_cols(social_stats, select_columns = c("country_classified"))
+
+nrow(social_stats)
 
 
-
-
-# everything about missing data https://cran.r-project.org/web/packages/finalfit/vignettes/missing.html 
 
 # ______Plots and General Data Preparation ______ --------
 
 
 
 #Plots
-#DV- Playlist Count = Logarithmic
-plot(artists$popularity_score,artists$playlist_count)
-#DV- Playlist Reach = Logarithmic
-plot(artists$popularity_score,artists$playlist_reach)
-#Playlist Count- Playlist Reach = Linear
-plot(artists$playlist_count,artists$playlist_reach)
+#DV- Playlist Count 
+plot(social_stats$popularity_score,social_stats$playlist_count)
+#DV- Playlist Reach 
+plot(social_stats$popularity_score,social_stats$playlist_reach)
+#DV- Deezer Fans Rank 
+plot(social_stats$popularity_score,social_stats$deezer_fans_rank)
+#DV- Youtube Subscribers
+plot(social_stats$popularity_score,social_stats$youtube_subscribers_rank)
+#DV- Youtube Views
+plot(social_stats$popularity_score,social_stats$youtube_views_rank)
+#DV- Pandora Monthly Listeners
+plot(social_stats$popularity_score,social_stats$pandora_monthly_listeners_rank)
+#DV- Twitch Monthly Views Rank
+plot(social_stats$popularity_score,social_stats$twitch_monthly_viewers_rank)
+
+plot(social_stats$playlist_count,social_stats$playlist_reach)
+
+
 #DV- Gender 
 boxplot(artists$popularity_score,artists$gender)
 #DV- Press Contact 
@@ -1853,41 +1937,62 @@ artists <- artists[,c("name","country","country_classified", "gender", "record_l
 
 # Descriptives ------------------------------------------------------------
 
-summary(artists)
-sd(artists$popularity_score, na.rm=TRUE)
-sd(artists$playlist_count, na.rm=TRUE)
-sd(artists$playlist_reach, na.rm=TRUE)
-sd(artists$gender, na.rm=TRUE)
-sd(artists$major_label, na.rm=TRUE)
-summary(artists$major_label)
+summary(social_stats)
 
-artists$press_contact <- as.integer(artists$press_contact)  
-artists$booking_agent <- as.integer(artists$booking_agent)
-sd(artists$press_contact, na.rm=TRUE)
-sd(artists$booking_agent, na.rm=TRUE)
+#Standard Deviation
+sd(social_stats$popularity_score, na.rm=TRUE)
+sd(social_stats$playlist_count, na.rm=TRUE)
+sd(social_stats$playlist_reach, na.rm=TRUE)
+sd(social_stats$gender, na.rm=TRUE)
+sd(social_stats$major_label, na.rm=TRUE)
 
-cor.test(artists$gender, artists$popularity_score, method = "pearson")
-cor.test(artists$press_contact, artists$popularity_score, method = "pearson")
-cor.test(artists$booking_agent, artists$popularity_score, method = "pearson")
-cor.test(artists$playlist_count, artists$popularity_score, method = "pearson")
-cor.test(artists$playlist_reach, artists$popularity_score, method = "pearson")
-cor.test(artists$major_label, artists$popularity_score, method = "pearson")
+social_stats$press_contact <- as.integer(social_stats$press_contact)  
+social_stats$booking_agent <- as.integer(social_stats$booking_agent)
+sd(social_stats$press_contact, na.rm=TRUE)
+sd(social_stats$booking_agent, na.rm=TRUE)
 
-sd(social_stats1$deezer_fans_rank, na.rm=TRUE)
-sd(social_stats1$youtube_subscribers_rank, na.rm=TRUE)
-sd(social_stats1$youtube_views_rank, na.rm=TRUE)
-sd(social_stats1$pandora_monthly_listeners_rank, na.rm=TRUE)
-sd(social_stats1$twitch_monthly_viewers_rank, na.rm=TRUE)
-sd(social_stats1$twitch_weekly_viewers_rank, na.rm=TRUE)
+sd(social_stats$deezer_fans_rank, na.rm=TRUE)
+sd(social_stats$youtube_subscribers_rank, na.rm=TRUE)
+sd(social_stats$youtube_views_rank, na.rm=TRUE)
+sd(social_stats$pandora_monthly_listeners_rank, na.rm=TRUE)
+sd(social_stats$twitch_monthly_viewers_rank, na.rm=TRUE)
+sd(social_stats$twitch_weekly_viewers_rank, na.rm=TRUE)
 
-cor.test(social_stats1$deezer_fans_rank, social_stats1$popularity_score, method = "pearson")
-cor.test(social_stats1$youtube_subscribers_rank, social_stats1$popularity_score, method = "pearson")
-cor.test(social_stats1$youtube_views_rank, social_stats1$popularity_score, method = "pearson")
-cor.test(social_stats1$pandora_monthly_listeners_rank, social_stats1$popularity_score, method = "pearson")
-cor.test(social_stats1$twitch_monthly_viewers_rank, social_stats1$popularity_score, method = "pearson")
-cor.test(social_stats1$twitch_weekly_viewers_rank, social_stats1$popularity_score, method = "pearson")
+#Pearson Correlation
+cor.test(social_stats$gender, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$press_contact, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$booking_agent, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$playlist_count, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$playlist_reach, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$major_label, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$deezer_fans_rank, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$youtube_subscribers_rank, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$youtube_views_rank, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$pandora_monthly_listeners_rank, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$twitch_monthly_viewers_rank, social_stats$popularity_score, method = "pearson")
+cor.test(social_stats$twitch_weekly_viewers_rank, social_stats$popularity_score, method = "pearson")
+
+#Spearman Correlation
+cor.test(social_stats$gender, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$press_contact, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$booking_agent, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$playlist_count, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$playlist_reach, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$major_label, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$deezer_fans_rank, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$youtube_subscribers_rank, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$youtube_views_rank, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$pandora_monthly_listeners_rank, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$twitch_monthly_viewers_rank, social_stats$popularity_score, exact = FALSE, method = "spearman")
+cor.test(social_stats$twitch_weekly_viewers_rank, social_stats$popularity_score, exact = FALSE, method = "spearman")
+
+
 
 #colSds(as.matrix(artists[sapply(artists, is.numeric)]))
+
+#LOG Transform POPULARITY SCORE
+artists$popularity_score_norm <- log(artists$popularity_score)
+hist(artists$popularity_score_norm)
 
 #LOG Transform REACH & COUNT https://www.pluralsight.com/guides/normalizing-data-r
 artists$playlist_reach_norm <- log(artists$playlist_reach)
@@ -1910,27 +2015,119 @@ kyrtosis(artists$popularity_score, na.rm = TRUE)
 skewness(artists$followers, na.rm = TRUE)
 skewness(artists$monthly_listeners, na.rm = TRUE) 
 
-#CREATIVE PLOTS
-library(ggplot2);
-ggplot(artists, aes(as.factor(artists$country_classified), artists$popularity_score)) + 
-  geom_boxplot() #popularity_score per country_classified boxplot
-
-table(artists$country_classified)
-
-
 
 # Creative Plots ----------------------------------------------------------
 
-ggplot(artists, aes(as.factor(artists$booking_agent), artists$popularity_score)) + 
+help(par)
+layout.show()
+par(mfcol=c(2,2))
+
+boxplot(social_stats$gender, social_stats$popularity_score)
+boxplot(social_stats$major_label, social_stats$popularity_score)
+boxplot(social_stats$booking_agent, social_stats$popularity_score)
+boxplot(social_stats$press_contact, social_stats$popularity_score)
+
+boxplot(popularity_score ~ gender, data = social_stats,
+        varwidth = TRUE, log = "y", las = 1)
+title("Gender vs Popularity Score")
+
+boxplot(popularity_score ~ press_contact, data = social_stats,
+        varwidth = TRUE, log = "y", las = 1)
+title("Press Contact vs Popularity Score")
+
+boxplot(popularity_score ~ booking_agent, data = social_stats,
+        varwidth = TRUE, log = "y", las = 1)
+title("Booking Agent vs Popularity Score")
+
+
+plot(deezer_fans_rank ~ popularity_score , data = social_stats,
+        varwidth = TRUE, log = "y", las = 1)
+title("Deezer Fans Rank vs Popularity Score")
+
+
+par(mfcol=c(1,2))
+plot((social_stats$popularity_score), social_stats$playlist_reach, lwd=1, main="Playlist Reach",xlab = "Popupality Score", ylab = "Playlist Reach")
+plot((social_stats$popularity_score), social_stats$playlist_count, lwd=1, main="Playlist Count",xlab = "Popupality Score", ylab = "Playlist Count")
+
+abline(lm(social_stats$popularity_score~social_stats$playlist_reach), col = "blue", lty = 4)
+
+#plot(social_stats$playlist_reach, social_stats$playlist_count, lwd=1, main="Playlist Reach vs Count")
+#abline(lm(social_stats$playlist_reach ~ social_stats$playlist_count))
+
+
+par(mfcol=c(2,3))
+plot(social_stats$deezer_fans_rank, social_stats$popularity_score, lwd=1, main="Deezer Fans Rank",xlab = "Deezer Fans Rank", ylab = "Popupality Score")
+plot(social_stats$youtube_subscribers_rank, social_stats$popularity_score, lwd=1, main="Youtube Subscribers Rank",xlab = "Youtube Subscribers Rank", ylab = "Popupality Score")
+plot(social_stats$youtube_views_rank, social_stats$popularity_score, lwd=1, main="Youtube Views Rank",xlab = "Youtube Views Rank", ylab = "Popupality Score")
+plot(social_stats$pandora_monthly_listeners_rank, social_stats$popularity_score, lwd=1, main="Pandora Monthly Listeners Rank",xlab = "Pandora Monthly Listeners Rank", ylab = "Popupality Score")
+plot(social_stats$twitch_monthly_viewers_rank, social_stats$popularity_score, lwd=1, main="Twitch Monthly Viewers Rank",xlab = "Twitch Monthly Viewers Rank", ylab = "Popupality Score")
+#plot(social_stats$twitch_weekly_viewers_rank, social_stats$popularity_score, lwd=1, main="Twitch Weekly Viewers Rank", xlab = "Twitch Weekly Viewers Rank", ylab = "Popupality Score")
+hist(social_stats$popularity_score)
+
+par(mfcol=c(1,3))
+plot(table(social_stats$major_label, social_stats$gender), main="Gender x Major Label")
+plot(table(social_stats$major_label, social_stats$press_contact),main="Press Contact x Major Label")
+plot(table(social_stats$major_label, social_stats$booking_agent),main="Booking Agent x Major Label")
+
+
+
+ggplot(social_stats, aes(as.factor(booking_agent), popularity_score)) + 
   geom_boxplot() #popularity_score per booking_agent boxplot
-ggplot(artists, aes(as.factor(artists$press_contact), artists$popularity_score)) + 
+ggplot(social_stats, aes(as.factor(press_contact), popularity_score)) + 
   geom_boxplot() #popularity_score per press_contact boxplot
-ggplot(artists, aes(as.factor(artists$major_label), artists$popularity_score)) + 
+ggplot(social_stats, aes(as.factor(major_label), popularity_score)) + 
   geom_boxplot() #popularity_score per major_label boxplot
-ggplot(artists, aes(as.factor(artists$gender), artists$popularity_score)) + 
+ggplot(social_stats, aes(as.factor(gender), popularity_score)) + 
   geom_boxplot() #popularity_score per gender boxplot
+
+ggplot(social_stats, aes(as.factor(country_classified), popularity_score)) + 
+  geom_boxplot() #popularity_score per gender boxplot
+
+ggplot(social_stats, aes(as.factor(social_stats$major_label), popularity_score)) + 
+  geom_boxplot() #popularity_score per gender boxplot
+
+table(social_stats$major_label, social_stats$gender) 
+table(social_stats$major_label, social_stats$booking_agent) 
+table(social_stats$major_label, social_stats$press_contact) 
+
+plot(table(social_stats$major_label, social_stats$booking_agent) )
+summary(social_stats$gender)
+
+#Country
+library(ggplot2);
+ggplot(social_stats, aes(as.factor(social_stats$country_classified), social_stats$popularity_score)) + 
+  geom_boxplot() #popularity_score per country_classified boxplot
 ggplot(artists, aes(as.factor(artists$country_classified), artists$popularity_score)) + 
-  geom_boxplot() #popularity_score per gender boxplot
+  geom_boxplot() #popularity_score per country_classified boxplot
+
+
+table(artists$country_classified)
+
+boxplot(social_stats$country_classified, social_stats$popularity_score)
+
+
+# Pearson Correlation -----------------------------------------------------
+
+cor.test(social_stats$gender,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$major_label,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$press_contact,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$booking_agent,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$country_classified_Benelux,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$`country_classified_Britain+`,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$`country_classified_East Europe`,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$country_classified_France,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$`country_classified_Germany+`,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$`country_classified_Latin America`,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$country_classified_Nordics,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$`country_classified_North America`,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$country_classified_Oceania,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$country_classified_Other`, social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$`country_classified_South Europe`, social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$deezer_fans_rank,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$youtube_subscribers_rank,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$youtube_views_rank,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$pandora_monthly_listeners_rank,social_stats$popularity_score, method=c("pearson"))
+cor.test(social_stats$twitch_monthly_viewers_rank,social_stats$popularity_score, method=c("pearson"))
 
 
 
@@ -1943,30 +2140,327 @@ ggplot(artists, aes(as.factor(artists$country_classified), artists$popularity_sc
 
 
 
-# Multiple Regression Model 1 ---------------------------------------
 
 
-Model_Artists <- lm(artists$popularity_score ~ artists$gender+artists$country_classified+
-                  artists$press_contact+artists$booking_agent+
-                  artists$playlist_count+artists$playlist_reach, data=artists) 
+#Artists Model contra
 
-summary(Model_Artists) # show results| p-value<0.05, r2=0.1725, adjusted r2=1647
-print(Model_Artists)
+
+
+# Multiple Regression Model 2 ---------------------------------------
+
+#summary(social_stats$`country_classified_Britain+` == 1)
+#summary(social_stats$`country_classified_Germany+` == 1)
+#summary(social_stats$`country_classified_Latin America` == 1)
+#summary(social_stats$`country_classified_North America` == 1)
+#summary(social_stats$country_classified_Oceania == 1)
+#summary(social_stats$country_classified_Other == 1)
+#summary(social_stats$`country_classified_South Europe` == 1)
+#summary(social_stats$major_label == 1)
+
+social_stats <- social_stats[-c(162, 699, 371, 186), ]
+#699 Rihanna, 162 Chance the Rapper, 186 Paul Kalkbrenner, 371 Joseph Sullinger
+social_stats <- social_stats[-c(142, 597, 467, 268), ]
+social_stats <- social_stats[-c(166, 617, 570, 184), ]
+social_stats <- social_stats[-c(299, 328, 386, 424), ] 
+social_stats <- social_stats[-c(663, 121, 87), ] #delete outliers till here, no more
+social_stats <- social_stats[-c(5, 428, 39,585), ] 
+social_stats <- social_stats[-c(155, 79, 683,710), ] 
+
+#LOG Transform https://www.pluralsight.com/guides/normalizing-data-r
+social_stats$popularity_score_norm <- log(social_stats$popularity_score)
+social_stats$playlist_reach_norm <- log(social_stats$playlist_reach)
+social_stats$playlist_count_norm <- log(social_stats$playlist_count)
+social_stats$deezer_fans_rank_norm <- log(social_stats$deezer_fans_rank)
+social_stats$youtube_subscribers_rank_norm <- log(social_stats$youtube_subscribers_rank)
+social_stats$youtube_views_rank_norm <- log(social_stats$youtube_views_rank)
+social_stats$pandora_monthly_listeners_rank_norm <- log(social_stats$pandora_monthly_listeners_rank)
+social_stats$twitch_monthly_viewers_rank_norm <- log(social_stats$twitch_monthly_viewers_rank)
+social_stats$twitch_weekly_viewers_rank_norm <- log(social_stats$twitch_weekly_viewers_rank)
+
+#LOGARITHMIC 1
+linearMod_social_stats <- lm(social_stats$popularity_score_norm ~ social_stats$gender + social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe` +
+                               social_stats$country_classified_France+social_stats$`country_classified_Britain+`+
+                               social_stats$`country_classified_Germany+`+
+                               social_stats$`country_classified_Latin America` + social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania + social_stats$country_classified_Other+
+                               social_stats$`country_classified_North America` + social_stats$`country_classified_South Europe`+
+                               social_stats$press_contact + social_stats$booking_agent+
+                         social_stats$playlist_count_norm+ social_stats$playlist_reach_norm+
+                         social_stats$deezer_fans_rank_norm+ social_stats$youtube_subscribers_rank_norm+
+                         social_stats$youtube_views_rank_norm+ social_stats$pandora_monthly_listeners_rank_norm+
+                         social_stats$twitch_monthly_viewers_rank_norm) 
+summary(linearMod_social_stats) # show results
+
+#LOGARITHMIC 2
+linearMod_social_stats <- lm(social_stats$popularity_score_norm ~ social_stats$gender+social_stats$country_classified+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count_norm+social_stats$playlist_reach_norm+
+                               social_stats$deezer_fans_rank_norm+social_stats$youtube_subscribers_rank_norm+
+                               social_stats$youtube_views_rank_norm+social_stats$pandora_monthly_listeners_rank_norm+
+                               social_stats$twitch_monthly_viewers_rank_norm
+) 
+summary(linearMod_social_stats) # ----
+
+par(mfcol=c(2,2))
+#RESIDUALS
+residuals <- resid(linearMod_social_stats)
+shapiro.test(residuals) #shapiro test >0.05
+plot(linearMod_social_stats)
+
+#LINEAR 1
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+social_stats$country_classified+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               +social_stats$major_label+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                               ) 
+summary(linearMod_social_stats) # BENELUX
+par(mfcol=c(2,2))
+#RESIDUALS
+residuals <- resid(linearMod_social_stats)
+shapiro.test(residuals) #shapiro test >0.05
+plot(linearMod_social_stats)
+
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                              
+                               social_stats$country_classified_France+social_stats$`country_classified_Britain+`+
+                               social_stats$`country_classified_Germany+`+
+                               social_stats$`country_classified_Latin America`+ social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # EAST EUROPE  
+
+par(mfcol=c(2,2))
+#RESIDUALS
+residuals <- resid(linearMod_social_stats)
+summary(residuals)
+hist(residuals, main = "Histogram of Residuals", xlab = "residuals") #Visually: not normal distribution
+plot(residuals, main = "Plot of Residuals", xlab = "residuals")
+boxplot(residuals, main = "Boxplot of Residuals", xlab = "residuals")
+shapiro.test(residuals) #shapiro test >0.05
+plot(linearMod_social_stats)
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                              social_stats$`country_classified_Britain+`+
+                               social_stats$`country_classified_Germany+`+
+                               social_stats$`country_classified_Latin America`+ social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # FRANCE   
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               
+                               social_stats$`country_classified_Germany+`+
+                               social_stats$`country_classified_Latin America`+ social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # BRITAIN+ 
+#social_stats$country_classified_Nordics 3.234e+00  1.696e+00   1.907 0.056981 . social_stats$`country_classified_Britain+`+
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               social_stats$`country_classified_Britain+`+                               
+                               social_stats$`country_classified_Latin America`+ social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # Germany+  
+#social_stats$country_classified_Nordics          4.419e+00  1.992e+00   2.219 0.026827 *
+#social_stats$country_classified_Other            3.880e+00  2.167e+00   1.790 0.073900 .  
+#social_stats$`country_classified_South Europe`   3.788e+00  2.126e+00   1.781 0.075292 .
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               social_stats$`country_classified_Britain+`+  
+                               social_stats$`country_classified_Germany+`+ 
+                                social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # Latin America  
+#social_stats$`country_classified_North America` -2.696e+00  1.612e+00  -1.672 0.095011 . 
+
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                                 social_stats$`country_classified_East Europe`+
+                                 social_stats$country_classified_France+
+                                 social_stats$`country_classified_Britain+`+  
+                                 social_stats$`country_classified_Germany+`+ 
+                                 social_stats$`country_classified_Latin America`+
+                                 social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                                 social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                                 social_stats$press_contact+social_stats$booking_agent+
+                                 social_stats$playlist_count+social_stats$playlist_reach+
+                                 social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                                 social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                                 social_stats$twitch_monthly_viewers_rank
+                               , data=social_stats) 
+summary(linearMod_social_stats) # Nordics social_stats$country_classified_Nordics+   
+#social_stats$`country_classified_Britain+`      -3.234e+00  1.696e+00  -1.907 0.056981 .  
+#social_stats$`country_classified_Germany+`      -4.419e+00  1.992e+00  -2.219 0.026827 * 
+#social_stats$`country_classified_North America` -4.091e+00  1.515e+00  -2.700 0.007095 **
+
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               social_stats$`country_classified_Britain+`+  
+                               social_stats$`country_classified_Germany+`+ 
+                               social_stats$`country_classified_Latin America`+
+                               social_stats$country_classified_Nordics+   
+                               social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # Oceania social_stats$country_classified_Oceania+
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               social_stats$`country_classified_Britain+`+  
+                               social_stats$`country_classified_Germany+`+ 
+                               social_stats$`country_classified_Latin America`+
+                               social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+
+                               
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # Other social_stats$country_classified_Other+
+#social_stats$`country_classified_Germany+`      -3.880e+00  2.167e+00  -1.790 0.073900 . 
+#social_stats$`country_classified_North America` -3.552e+00  1.812e+00  -1.960 0.050373 .  
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               social_stats$`country_classified_Britain+`+  
+                               social_stats$`country_classified_Germany+`+ 
+                               social_stats$`country_classified_Latin America`+
+                               social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+
+                               social_stats$country_classified_Other+
+                               social_stats$`country_classified_North America`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # South Europe social_stats$`country_classified_South Europe`+
+#social_stats$`country_classified_Germany+`      -3.788e+00  2.126e+00  -1.781 0.075292 .  
+#social_stats$`country_classified_North America` -3.460e+00  1.799e+00  -1.924 0.054774 . 
+
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+ social_stats$country_classified_Benelux+
+                               social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+
+                               social_stats$`country_classified_Britain+`+  
+                               social_stats$`country_classified_Germany+`+ 
+                               social_stats$`country_classified_Latin America`+
+                               social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+
+                               social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+
+                               social_stats$press_contact+social_stats$booking_agent+
+                               social_stats$major_label+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+summary(linearMod_social_stats) # North America social_stats$`country_classified_North America`+ 
+#social_stats$country_classified_Nordics          4.091e+00  1.515e+00   2.700 0.007095 ** 
+#social_stats$country_classified_Other            3.552e+00  1.812e+00   1.960 0.050373 .  
+#social_stats$`country_classified_South Europe`   3.460e+00  1.799e+00   1.924 0.054774 . 
+#social_stats$`country_classified_Latin America`  2.696e+00  1.612e+00   1.672 0.095011 .  
+
+
+
+
+#Model WITHOUT Press Contact & Booking Agent------------------------------------------------
+linearMod_social_stats <- lm(social_stats$popularity_score ~ social_stats$gender+social_stats$country_classified_Benelux
+                             +social_stats$`country_classified_East Europe`+
+                               social_stats$country_classified_France+social_stats$`country_classified_Britain+`+
+                               social_stats$`country_classified_Germany+`+
+                               social_stats$`country_classified_Latin America`+social_stats$country_classified_Nordics+
+                               social_stats$country_classified_Oceania+social_stats$country_classified_Other+
+                               social_stats$`country_classified_South Europe`+social_stats$`country_classified_North America`+
+                               social_stats$playlist_count+social_stats$playlist_reach+
+                               social_stats$deezer_fans_rank+social_stats$youtube_subscribers_rank+
+                               social_stats$youtube_views_rank+social_stats$pandora_monthly_listeners_rank+
+                               social_stats$twitch_monthly_viewers_rank
+                             , data=social_stats) 
+
+summary(linearMod_social_stats) # show results
 
 #examining the multivariate regression http://www.sthda.com/english/articles/40-regression-analysis/168-multiple-linear-regression-in-r/ 
 
+par(mfrow = c(2, 2))
+plot(linearMod_social_stats)
+plot(linearMod_social_stats, 4)
+
+
+par(mfcol=c(1,3))
 #RESIDUALS
-residuals <- resid(Model_Artists)
-hist(residuals) #Visually: not normal distribution
-ggdensity(residuals, main = "Density plot of residuals", xlab = "residuals") 
-ggqqplot(residuals)
+residuals <- resid(linearMod_social_stats)
+summary(residuals)
+hist(residuals, main = "Histogram of Residuals", xlab = "residuals") #Visually: not normal distribution
+plot(residuals, main = "Plot of Residuals", xlab = "residuals")
+boxplot(residuals, main = "Boxplot of Residuals", xlab = "residuals")
+
+#ggdensity(residuals, main = "Density plot of residuals", xlab = "residuals") 
+#ggqqplot(residuals)
 shapiro.test(residuals) #shapiro test >0.05
 skewness(residuals, na.rm = TRUE) #skewness
 kyrtosis(residuals, na.rm = TRUE) #kyrtosis
 sd(residuals, na.rm=TRUE) #standard deviation
 
-sigma(Model_Artists) #residual standard error
-sigma(Model_Artists)/mean(artists$popularity_score)
+sigma(linearMod_social_stats) #residual standard error
+sigma(linearMod_social_stats)/mean(social_stats$popularity_score)
 
 #OTHER REGRESSION CHECKS
 head(fitted(Model_Artists)) # predicted values
@@ -1974,6 +2468,17 @@ vcov(Model_Artists) #not so useful
 anova(Model_Artists) # anova table
 
 # Other useful functions
+library(tidyverse)
+install.packages("caret", dependencies = TRUE) 
+library(caret)
+
+install.packages('devtools') #assuming it is not already installed
+library(devtools)
+install_github('andreacirilloac/updateR')
+library(updateR)
+
+
+
 coefficients(Model_Artists) # model coefficients
 confint(Model_Artists, level=0.95) # CIs for model parameters
 fitted(Model_Artists) # predicted values
@@ -1994,123 +2499,7 @@ k <- lm(artists$playlist_count ~artists$popularity_score)
 summary(k)
 
 
-
-
-
-#Artists Model contra
-
-
-# Multiple Regression Model 1 Reverse --------------------------------
-
-nrow(artists)
-
-Model_Artists_contra1 <- lm(artists$popularity_score ~ artists$gender+artists$country_classified, data=artists) 
-summary(Model_Artists_contra1) # show results
-
-Model_Artists_contra2 <- lm(artists$playlist_count ~ artists$popularity_score, data=artists) 
-summary(Model_Artists_contra2) # show results
-
-Model_Artists_contra3 <- lm(artists$playlist_reach ~ artists$popularity_score, data=artists) 
-summary(Model_Artists_contra3) # show results
-
-Model_Artists_contra4 <- lm(artists$press_contact ~ artists$popularity_score, data=artists) 
-summary(Model_Artists_contra4) # show results
-
-Model_Artists_contra5 <- lm(artists$booking_agent ~ artists$popularity_score, data=artists) 
-summary(Model_Artists_contra5) # show results
-
-Model_Artists_contra6 <- lm(artists$major_label ~ artists$popularity_score, data=artists) 
-summary(Model_Artists_contra6) # show results
-
-
-
-
-
-# Multiple Regression Model 2 ---------------------------------------
-
-
-linearMod_Social_Stats1 <- lm(social_stats1$popularity_score ~ social_stats1$gender+social_stats1$country_classified+
-                         social_stats1$press_contact+social_stats1$booking_agent+
-                         social_stats1$playlist_count+social_stats1$playlist_reach+
-                         social_stats1$deezer_fans_rank+social_stats1$youtube_subscribers_rank+
-                         social_stats1$youtube_views_rank+social_stats1$pandora_monthly_listeners_rank+
-                         social_stats1$twitch_monthly_viewers_rank+social_stats1$twitch_weekly_viewers_rank
-                         , data=artists) 
-
-summary(linearMod_Social_Stats1) # show results
-
-#examining the multivariate regression http://www.sthda.com/english/articles/40-regression-analysis/168-multiple-linear-regression-in-r/ 
-
-#RESIDUALS
-residuals <- resid(linearMod_Social_Stats1)
-hist(residuals) #Visually: not normal distribution
-ggdensity(residuals, main = "Density plot of residuals", xlab = "residuals") 
-ggqqplot(residuals)
-shapiro.test(residuals) #Mathematically: not normal distribution
-sigma(linearMod) #residual standard error
-sigma(linearMod)/mean(artists$popularity_score)
-
-head(fitted(linearMod)) # predicted values
-vcov(linearMod)
-anova(linearMod) # anova table
-
-# Other useful functions
-coefficients(linearMod) # model coefficients
-confint(linearMod, level=0.95) # CIs for model parameters
-fitted(linearMod) # predicted values
-residuals(linearMod) # residuals
-anova(linearMod) # anova table
-vcov(linearMod) # covariance matrix for model parameters
-influence(linearMod) # regression diagnostics
-
-#check for multicollinearity
-VIF(linearMod)
-
-
-
-# Multiple Regression Model 2 Reverse ----------------------------------------------------
-
-Model_Artists_contra1 <- lm(social_stats1$popularity_score ~ social_stats1$gender+social_stats1$country_classified, data=artists) 
-summary(Model_Artists_contra1) # show results
-
-Model_Artists_contra2 <- lm(social_stats1$playlist_count ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra2) # show results
-
-Model_Artists_contra3 <- lm(social_stats1$playlist_reach ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra3) # show results
-
-Model_Artists_contra4 <- lm(social_stats1$press_contact ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra4) # show results
-
-Model_Artists_contra5 <- lm(social_stats1$booking_agent ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra5) # show results
-
-Model_Artists_contra6 <- lm(social_stats1$major_label ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra6) # show results
-
-Model_Artists_contra7 <- lm(social_stats1$deezer_fans_rank ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra7) # show results
-
-Model_Artists_contra8 <- lm(social_stats1$youtube_subscribers_rank ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra8) # show results
-
-Model_Artists_contra9 <- lm(social_stats1$youtube_views_rank ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra9) # show results
-
-Model_Artists_contra10 <- lm(social_stats1$pandora_monthly_listeners_rank ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra10) # show results
-
-Model_Artists_contra11 <- lm(social_stats1$twitch_monthly_viewers_rank ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra11) # show results
-
-Model_Artists_contra12 <- lm(social_stats1$twitch_weekly_viewers_rank ~ social_stats1$popularity_score, data=artists) 
-summary(Model_Artists_contra12) # show results
-
-
-
-
-
-# _________________INTERPOLATION EXPERIMENTING_________________ -----------
+# _INTERPOLATION EXPERIMENTING___ -----------
 
 
 hist(artists$deezer_fans_rank)
@@ -2182,3 +2571,27 @@ dataframe9[, major_label:=0]
 
 
 
+
+
+
+# Missings for Appendix ---------------------------------------------------
+
+View(artists)
+missing_reg <- lm(artists$popularity_missing ~ artists$followers + artists$monthly_listeners)
+summary(missing_reg)
+
+missing_reg2 <- lm(artists$popularity_missing ~ artists$gender_missing + artists$major_label_missing 
+                   + artists$playlist_count_missing + artists$playlist_reach_missing
+                   + artists$deezer_fans_rank_missing + artists$youtube_subscribers_rank_missing
+                   + artists$youtube_views_rank_missing + artists$pandora_monthly_listeners_rank_missing
+                   + artists$twitch_monthly_viewers_rank_missing + artists$twitch_weekly_viewers_rank_missing)
+
+summary(missing_reg2)
+
+missing_reg3 <- lm(artists$popularity_missing ~ artists$gender_missing + artists$major_label_missing 
+                   + artists$playlist_count_missing + artists$playlist_reach_missing)
+
+summary(missing_reg3)
+
+## based on this , we know that missings are not Completely are random, they are at random or not at random.
+## what to do??
